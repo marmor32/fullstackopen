@@ -1,56 +1,81 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react';
+//import axios from 'axios';
+import Filter from './components/filter';
+import PersonForm from './components/personform';
+import Persons from './components/persons'
+import personServices from './services/persons'
 
-const Header = (props) => {
+function App() {
+  const [ persons, setPersons] = useState([])
+  const [ newName, setNewName ] = useState('')
+  const [ newNumber, setNewNumber ] = useState('')
+  const [ filter, setFilter ] = useState('')
+  const addPerson = (event) => {
+    event.preventDefault()
+    const personObject = {
+      name: newName,
+      number: newNumber
+    }
+    console.log(personObject)
+    const all_names = persons.map(person => person.name)
+    if (all_names.includes(newName)) {
+      alert(`${newName} is already added to phonebook`)
+      return
+    }
+    personServices.create(personObject)
+    .then(response => {
+      setPersons(persons.concat(response.data))
+      setNewNumber('')
+      setNewName('')
+    })
+  }
+  const handleNameChange = (event) => {
+    console.log(event.target.value)
+    setNewName(event.target.value)
+  }
+  const handleNumberChange = (event) => {
+    setNewNumber(event.target.value)
+  }
+  const handleFilterChange = (event) => {
+    setFilter(event.target.value)
+  }
+  const personsToShow = filter === ''
+    ? persons
+    : persons.filter(person =>
+        person.name.toLowerCase().includes(filter.toLowerCase()))
+  const row_names = () => personsToShow.map(person => {
+    return(
+      <div key={person.name}>
+        <p key={person.name}>{person.name} {person.number}</p>
+        <button onClick={() => deletePerson(person)}>delete</button>
+      </div>
+     )
+    }
+  )
+  const deletePerson = (person) => {
+    if(window.confirm(`confirm deletion of ${person.name}`)) {
+      personServices.deletePerson(person.id)
+      setPersons(persons.filter(n => n.name !== person.name))
+    }
+  }
+  useEffect(() => {
+    personServices.getAll()
+      .then(response => setPersons(response.data))
+  },[])
   return (
     <div>
-      <h1>{props.course}</h1>
+      <h2>Phonebook</h2>
+      <Filter value={filter} onChange={handleFilterChange} />
+      <h2>add a new</h2>
+      <PersonForm
+        onSubmit={addPerson}
+        name={{value: newName, onChange: handleNameChange}}
+        number={{value: newNumber, onChange: handleNumberChange}}
+      />
+      <h2>Numbers</h2>
+      <Persons persons={row_names()} />
     </div>
   )
 }
-const Part = (props) => {
-  return (
-    <div>
-      <p>
-        {props.part} {props.exercise}
-      </p>
-    </div>
-  )
-}
-const Content = (props) => {
-  return (
-    <div>
 
-     <Part part={props.part1} exercise={props.exercises1} />
-     <Part part={props.part2} exercise={props.exercises2} />
-     <Part part={props.part3} exercise={props.exercises3} />
-
-    </div>
-  )
-}
-const Total = (props) => {
-  return (
-    <div>
-     <p>Number of exercises {props.exercises1 + props.exercises2 + props.exercises3}</p>
-    </div>
-  )
-}
-const App = () => {
-  // const-definitions
-  const course = 'Half Stack application development'
-  const part1 = 'Fundamentals of React'
-  const exercises1 = 10
-  const part2 = 'Using props to pass data'
-  const exercises2 = 7
-  const part3 = 'State of a component'
-  const exercises3 = 14
-
-  return (
-    <div>
-      <Header course={course} />
-      <Content part1={part1} part2={part2} part3={part3} exercises1={exercises1} exercises2={exercises2} exercises3={exercises3} />
-      <Total exercises1={exercises1} exercises2={exercises2} exercises3={exercises3} />
-    </div>
-  )
-}
-
-export default App
+export default App;
