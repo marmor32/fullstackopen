@@ -4,12 +4,14 @@ import Filter from './components/filter';
 import PersonForm from './components/personform';
 import Persons from './components/persons'
 import personServices from './services/persons'
+import Notification from './components/notification';
 
 function App() {
   const [ persons, setPersons] = useState([])
   const [ newName, setNewName ] = useState('')
   const [ newNumber, setNewNumber ] = useState('')
   const [ filter, setFilter ] = useState('')
+  const [ msg, setMsg ] = useState(null)
   const addPerson = (event) => {
     event.preventDefault()
     const personObject = {
@@ -27,6 +29,7 @@ function App() {
       setPersons(persons.concat(response.data))
       setNewNumber('')
       setNewName('')
+      setMsg(`added ${response.data.name}`)
     })
   }
   const handleNameChange = (event) => {
@@ -43,6 +46,7 @@ function App() {
     ? persons
     : persons.filter(person =>
         person.name.toLowerCase().includes(filter.toLowerCase()))
+        
   const row_names = () => personsToShow.map(person => {
     return(
       <div key={person.name}>
@@ -62,10 +66,12 @@ function App() {
     personServices.getAll()
       .then(response => setPersons(response.data))
   },[])
+  
   return (
     <div>
       <h2>Phonebook</h2>
       <Filter value={filter} onChange={handleFilterChange} />
+      <Notification msg={msg} timeout={() => setMsg(null)} />
       <h2>add a new</h2>
       <PersonForm
         onSubmit={addPerson}
